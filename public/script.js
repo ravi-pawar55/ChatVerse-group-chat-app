@@ -9,21 +9,22 @@ var socket = io();
 
   const userName = prompt("Enter your name to join the chat:");
 
-  if(userName === null || userName === "") {
+  if(userName === null || userName === "" || userName.trim().length === 0) {
     alert("You must enter your name!");
     window.location.reload();
   } else {
     socket.emit("new-user-joining", userName);
-    socket.on("user-already-exists", (userName) => {
+  };
+    
+  socket.on("user-already-exists", (userName) => {
       alert("User with name " + userName + " already exists! Please choose another name.");
       window.location.reload();
-    });
-  };
+  });
 
-  // function handleTyping() {
-  //   console.log('typing');
-  //   socket.emit('typing',userName);
-  // };
+  function typingHandler() {
+    console.log('typing');
+    socket.emit('typing',userName);
+  };
 
   socket.on("user-joined", (users) => {
     connectedUserList.innerHTML='';
@@ -37,15 +38,24 @@ var socket = io();
       connectedUserList.add(option);
       }
     });
+
+    typing.innerHTML=`<div class="flex font-bold justify-center items-center mt-2 ">
+                            <span class="text-xs text-white-500 leading-none">🟢 ${connectedUserList.length} user online </span>
+                        </div>`;
+
   });
 
   socket.on("user-disconneted",(userName ) => {
-    console.log('Called');
+    //console.log('Called');
     for(let i = 0 ; i < connectedUserList.length ; i++){
       if(connectedUserList.option[i]===userName){
              connectedUserList.remove(i);
       }
     }
+
+    typing.innerHTML=`<div class="flex font-bold justify-center items-center mt-2 ">
+                            <span class="text-xs text-white-500 leading-none">🟢 ${connectedUserList.length} user online </span>
+                        </div>`;
   });
 
   form.addEventListener('submit', function(e) {
@@ -54,7 +64,7 @@ var socket = io();
        if(connectedUserList.value==='Everyone'){
           socket.emit('chat-msg',{msg:input.value,users:connectedUserList.value,user:userName});
        }else{
-        socket.emit('private-msg',{msg:input.value,users:connectedUserList.value,user:userName});
+          socket.emit('private-msg',{msg:input.value,users:connectedUserList.value,user:userName});
        }
     }
     input.value = '';
@@ -66,7 +76,7 @@ var socket = io();
       chatBox.innerHTML+=`<div class="flex w-full mt-2 space-x-3 max-w-xs ml-auto justify-end">
                              <div>
                                  <span class="text-xs text-gray-500 leading-none">You</span>
-                                 <div class="bg-blue-600 text-white p-3 rounded-l-lg rounded-br-lg">
+                                 <div class="bg-blue-600 text-white p-3 rounded-l-lg rounded-br-lg break-words">
                                        <p class="text-sm">${obj.msg}</p>
                                  </div>
                              </div>
@@ -77,7 +87,7 @@ var socket = io();
       chatBox.innerHTML+=`<div class="flex w-full mt-2 space-x-3 max-w-xs">
                            <div>
                              <span class="text-xs text-gray-500 leading-none">${obj.user}</span>
-                               <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg">
+                               <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg break-words">
                                  <p class="text-sm">${obj.msg}</p>
                                </div>    
                             </div>
@@ -92,9 +102,10 @@ var socket = io();
     chatBox.innerHTML+=`<div class="flex w-full mt-2 space-x-3 max-w-xs ml-auto justify-end">
                           <div>
                               <span class="text-xs text-gray-500 leading-none">You</span>
-                              <div class="bg-blue-600 text-white p-3 rounded-l-lg rounded-br-lg">
+                              <div class="bg-blue-600 text-white p-3 rounded-l-lg rounded-br-lg break-words">
                                 <p class="text-sm">${obj.msg}</p>
                               </div>
+                              <span class="text-xs text-red-500 leading-none">Private to :${connectedUserList.value}</span>   
                           </div>
                         </div>`;
    }
@@ -102,7 +113,7 @@ var socket = io();
     chatBox.innerHTML+=`<div class="flex w-full mt-2 space-x-3 max-w-xs">
                           <div>
                              <span class="text-xs text-gray-500 leading-none">${obj.user}</span>
-                             <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg">
+                             <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg break-words">
                                 <p class="text-sm">${obj.msg}</p>
                              </div>
                              <span class="text-xs text-red-500 leading-none">Private</span>    
@@ -132,11 +143,18 @@ socket.on('left',(username)=>{
     }
 });
 
-// socket.on('user-typing',(username)=>{
-//   console.log(username);
-//   if(username!==userName){
-//     typing.innerHTML=`<div class="flex font-bold justify-center items-center mt-2 ">
-//                             <span class="text-xs text-white-500 leading-none">${username} is typing...</span>
-//                         </div>`;
-//     }
-// });
+socket.on('user-typing',(username)=>{
+  //console.log('emiting');
+  if(username!==userName){
+    typing.innerHTML=`<div class="flex font-bold justify-center items-center mt-2 ">
+                            <span class="text-xs text-white-500 leading-none">${username} is typing...</span>
+                      </div>`;
+    }
+
+    setTimeout(()=>{
+      typing.innerHTML=`<div class="flex font-bold justify-center items-center mt-2 ">
+                            <span class="text-xs text-white-500 leading-none">🟢 ${connectedUserList.length} user online </span>
+                        </div>`;
+    }
+    ,500);
+});

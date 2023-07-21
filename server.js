@@ -17,8 +17,9 @@ app.get("/script.js", (req, res) => {
 io.on('connection', (socket) => {
 
   socket.on("new-user-joining", (userName) => {
+    
     if(getUser(userName)!==undefined){
-      socket.emit("user-already-exists", userName);
+      socket.emit("user-already-exists");
       return;
     }
 
@@ -26,10 +27,10 @@ io.on('connection', (socket) => {
     io.emit("joined",userName);
     io.emit("user-joined",Object.keys(getAllUser()));
 
-    // socket.on('typing', (userName) => {
-    //   console.log(userName);
-    //   io.emit('user-typing',userName);
-    // });
+    socket.on('typing', (userName) => {
+      //console.log('typing');
+      io.emit('user-typing',userName);
+    });
      
 
   socket.on("disconnect", () => {
